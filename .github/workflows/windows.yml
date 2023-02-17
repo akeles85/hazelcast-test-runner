@@ -72,6 +72,15 @@ jobs:
                 "https://curl.se/ca/cacert.pem" `
                 -OutFile "C:\cacert.pem"
 
+      - name: Install SysInternals
+        run: |
+            Invoke-WebRequest `
+                "https://download.sysinternals.com/files/SysinternalsSuite.zip" `
+                -OutFile "sys-internals.zip" `
+                -UserAgent "''"
+            Expand-Archive sys-internals.zip -DestinationPath sys-internals
+            ls sys-internals
+
       - name: Install Boost
         run: |
           Invoke-WebRequest `
@@ -128,4 +137,12 @@ jobs:
           HAZELCAST_ENTERPRISE_KEY: ${{ secrets.HAZELCAST_ENTERPRISE_KEY }}
           SSL_CERT_FILE: 'C:\cacert.pem'
         run: |
+          $dump = start-process -NoNewWindow sys-internals\procdump.exe {-accepteula -e -ma -w client_test.exe crash.dmp}
           .\scripts\test-windows.bat
+          $dump | wait-process
+          ls
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dump-file
+          path: |
+            *.dmp
