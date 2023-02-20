@@ -142,7 +142,9 @@ jobs:
           $dump | wait-process
           ls
       - uses: actions/upload-artifact@v3
+        if: failure()
         with:
           name: dump-file
           path: |
+            **/*.pdb
             *.dmp
