@@ -1,0 +1,64 @@
+name: Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        type: boolean
+        description: Enable/Disable test stage
+        default: true
+      branch_name:
+        type: string
+        description: Name of the branch
+        branch_name: "master"
+
+      
+
+jobs:
+  nightly-Windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        vc_boost:
+          - name: '19_80'
+            image: 'windows-2019'
+            boost_url: 'https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz'
+            boost_archive_name: 'boost_1_80_0.tar.gz'
+            boost_folder_name: 'boost_1_80_0'
+            boost_include_folder: 'C:\Boost\include\boost-1_80'
+        arch:
+          - cmake: Win32
+            choco_options: '--x86'
+            address_model: 32
+          - cmake: x64
+            choco_options: ''
+            address_model: 64
+        build_type:
+          - type: Debug
+            short: Dbg
+          - type: Release
+            short: Rel
+        shared_libs:
+          - toggle: OFF
+            name: Sta
+          - toggle: ON
+            name: Shr
+        with_openssl:
+          - toggle: OFF
+            name: ''
+          - toggle: ON
+            name: 'SSL'
+
+    runs-on: ${{ matrix.vc_boost.image }}
+    name: >-
+      win_${{ matrix.vc_boost.name }}_${{ matrix.arch.address_model }}_${{ matrix.build_type.short }}_${{ matrix.shared_libs.name }}_${{ matrix.with_openssl.name }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: 'OzanCansel/hazelcast-cpp-client'
+          ref: '${{ inputs.branch_name }}'
+
+      - name: hello-world
+        run: |
+            echo "Hello World!"
