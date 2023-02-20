@@ -15,7 +15,7 @@ on:
       
 
 jobs:
-  nightly-Windows:
+  windows:
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +50,8 @@ jobs:
             name: 'SSL'
 
     runs-on: ${{ matrix.vc_boost.image }}
+    env:
+      JOB_NAME: win_${{ matrix.vc_boost.name }}_${{ matrix.arch.address_model }}_${{ matrix.build_type.short }}_${{ matrix.shared_libs.name }}_${{ matrix.with_openssl.name }}
     name: >-
       win_${{ matrix.vc_boost.name }}_${{ matrix.arch.address_model }}_${{ matrix.build_type.short }}_${{ matrix.shared_libs.name }}_${{ matrix.with_openssl.name }}
 
@@ -144,7 +146,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: failure()
         with:
-          name: dump-file
+          name: dump-${{ env.JOB_NAME }}
           path: |
             **/*.pdb
             *.dmp
