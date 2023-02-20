@@ -50,6 +50,8 @@ jobs:
             name: 'SSL'
 
     runs-on: ${{ matrix.vc_boost.image }}
+    env:
+      JOB_NAME: win_${{ matrix.vc_boost.name }}_${{ matrix.arch.address_model }}_${{ matrix.build_type.short }}_${{ matrix.shared_libs.name }}_${{ matrix.with_openssl.name }}
     name: >-
       win_${{ matrix.vc_boost.name }}_${{ matrix.arch.address_model }}_${{ matrix.build_type.short }}_${{ matrix.shared_libs.name }}_${{ matrix.with_openssl.name }}
 
@@ -57,8 +59,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: 'OzanCansel/hazelcast-cpp-client'
-          ref: '${{ inputs.branch_name }}'
+          ref: '${{ env.branch_name }}'
 
       - name: hello-world
         run: |
-            echo "Hello World!"
+            echo "${{ env.JOB_NAME }}" > hello.txt
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dump-file-${{ env.JOB_NAME }}
+          path: |
+            hello.txt
