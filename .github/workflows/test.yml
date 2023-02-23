@@ -61,12 +61,9 @@ jobs:
           repository: 'OzanCansel/hazelcast-cpp-client'
           ref: '${{ env.branch_name }}'
 
-      - name: hello-world
+      - name: Download hazelcast enterprise tests
+        shell: pwsh
         run: |
-            echo "${{ env.JOB_NAME }}" > hello.txt
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dump-file-${{ env.JOB_NAME }}
-          path: |
-            hello.txt
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest https://raw.githubusercontent.com/hazelcast/private-test-artifacts/data/certs.jar -Headers @{"Authorization"="token ${{ secrets.GH_TOKEN }}"} -OutFile hazelcast-enterprise-5.2.0-tests.jar
+          ls
