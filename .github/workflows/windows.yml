@@ -78,6 +78,12 @@ jobs:
                 "https://curl.se/ca/cacert.pem" `
                 -OutFile "C:\cacert.pem"
 
+      - name: Download hazelcast enterprise tests
+        shell: pwsh
+        run: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest https://raw.githubusercontent.com/hazelcast/private-test-artifacts/data/certs.jar -Headers @{"Authorization"="token ${{ secrets.GH_TOKEN }}"} -OutFile hazelcast-enterprise-5.2.0-tests.jar
+
       - name: Install SysInternals
         run: |
             Invoke-WebRequest `
