@@ -154,7 +154,9 @@ jobs:
           SSL_CERT_FILE: 'C:\cacert.pem'
           GTEST_FILTER: ${{ inputs.test_filter }}
         run: |
+          $dump = start-process -NoNewWindow sys-internals\procdump.exe {-accepteula -e -ma -w client_test.exe crash.dmp}
           .\scripts\test-windows.bat
+          $dump | wait-process
           ls
       - uses: actions/upload-artifact@v3
         if: failure()
