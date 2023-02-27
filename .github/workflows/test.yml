@@ -10,16 +10,24 @@ on:
       branch_name:
         type: string
         description: Name of the branch
-        branch_name: "master"
-
-      
+        default: "master"
+      test_filter:
+        type: string
+        description: Argument for google test filter
+        default: "-DescribeInstancesTest.*:-*AwsClientTest*:-*AwsConfigTest*"
 
 jobs:
-  nightly-Windows:
+  windows:
     strategy:
       fail-fast: false
       matrix:
         vc_boost:
+          - name: '19_73'
+            image: 'windows-2019'
+            boost_url: 'https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.gz'
+            boost_archive_name: 'boost_1_73_0.tar.gz'
+            boost_folder_name: 'boost_1_73_0'
+            boost_include_folder: 'C:\Boost\include\boost-1_73'
           - name: '19_80'
             image: 'windows-2019'
             boost_url: 'https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz'
@@ -59,14 +67,41 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: 'OzanCansel/hazelcast-cpp-client'
-          ref: '${{ env.branch_name }}'
+          ref: '${{ inputs.branch_name }}'
 
-      - name: hello-world
-        run: |
-            echo "${{ env.JOB_NAME }}" > hello.txt
-
-      - uses: actions/upload-artifact@v3
+      - uses: nick-fields/retry@v2
+        name: Install OpenSSL
+        if: matrix.with_openssl.toggle == 'ON'
         with:
-          name: dump-file-${{ env.JOB_NAME }}
-          path: |
-            hello.txt
+          timeout_minutes: 10
+          max_attempts : 4
+          retry_on: error
+          command: |
+            choco install openssl ${{ matrix.arch.choco_options }}
+            Invoke-WebRequest `
+                "https://curl.se/ca/cacert.pem" `
+                -OutFile "C:\cacert.pem"
+
+      - name: Download hazelcast enterprise tests
+        shell: pwsh
+        run: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest https://raw.githubusercontent.com/hazelcast/private-test-artifacts/data/certs.jar -Headers @{"Authorization"="token ${{ secrets.GH_TOKEN }}"} -OutFile hazelcast-enterprise-5.2.0-tests.jar
+
+      - name: Cache SysInternals
+        id: cache-sys-internals
+        uses: actions/cache@v3
+        with:
+          key: sys-internals
+          path: sys-internals/
+
+      - if: ${{ steps.cache-sys-internals.outputs.cache-hit != 'true' }}
+        name: Install SysInternals
+        continue-on-error: true
+        run: |
+            Invoke-WebRequest `
+                "https://download.sysinternals.com/files/SysinternalsSuite.zip" `
+                -OutFile "sys-internals.zip" `
+                -UserAgent "''"
+            Expand-Archive sys-internals.zip -DestinationPath sys-internals
+            ls sys-internals
